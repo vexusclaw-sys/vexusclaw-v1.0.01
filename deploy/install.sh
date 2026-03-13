@@ -132,7 +132,7 @@ Flags:
 Behavior:
   - Sem flags, o instalador entra em modo assistido.
   - Com --install-token, o dominio oficial userxxxxxx.vexusclaw.com e reivindicado automaticamente.
-  - Sem --install-token, informe --domain para usar um dominio base proprio do cliente.
+  - Sem --install-token e sem --domain, o instalador usa fallback automatico em subdominio aleatorio via sslip.io.
   - O codigo e baixado preferencialmente do repositório oficial da VEXUSCLAW no GitHub.
   - Se o repositório ainda estiver vazio ou indisponivel, o instalador tenta o bundle oficial como fallback.
 EOF
@@ -551,8 +551,7 @@ prompt_if_needed() {
       echo
     fi
     if [[ -z "$BASE_DOMAIN" && -z "$PUBLIC_DOMAIN" && -z "$INSTALL_TOKEN" ]]; then
-      read -r -p "Dominio base do cliente [${BASE_DOMAIN_DEFAULT}]: " BASE_DOMAIN
-      BASE_DOMAIN="${BASE_DOMAIN:-$BASE_DOMAIN_DEFAULT}"
+      read -r -p "Dominio base do cliente [enter para fallback sslip.io]: " BASE_DOMAIN
     fi
     if [[ -z "$WORKSPACE_SLUG" && -z "$INSTALL_TOKEN" ]]; then
       read -r -p "Workspace slug [auto userxxxxx]: " WORKSPACE_SLUG
@@ -593,6 +592,31 @@ prompt_if_needed() {
 
 get_public_ip() {
   curl -fsSL https://api.ipify.org 2>/dev/null || true
+}
+
+configure_sslip_fallback_domain() {
+  if [[ -n "$INSTALL_TOKEN" || -n "$PUBLIC_DOMAIN" || -n "$BASE_DOMAIN" ]]; then
+    return
+  fi
+
+  PUBLIC_IP="${PUBLIC_IP:-$(get_public_ip)}"
+  if [[ -z "$PUBLIC_IP" ]]; then
+    print_error "Nao foi possivel detectar o IP publico para fallback automatico. Informe --domain ou --public-domain."
+    exit 1
+  fi
+
+  if [[ "$PUBLIC_IP" != *.* ]]; then
+    print_error "Fallback sslip.io requer IPv4 publico. Informe --domain ou --public-domain neste host."
+    exit 1
+  fi
+
+  BASE_DOMAIN="${PUBLIC_IP//./-}.sslip.io"
+  if [[ -z "$WORKSPACE_SLUG" ]]; then
+    WORKSPACE_SLUG="$(generate_workspace_slug "${EMAIL}:${BASE_DOMAIN}")"
+  fi
+  PUBLIC_DOMAIN="${WORKSPACE_SLUG}.${BASE_DOMAIN}"
+
+  print_warn "Sem --install-token e sem --domain informado. Usando fallback automatico: $PUBLIC_DOMAIN"
 }
 
 claim_self_host_domain() {
@@ -649,12 +673,11 @@ normalize_domain_inputs() {
   fi
 
   if [[ -z "$BASE_DOMAIN" && -z "$PUBLIC_DOMAIN" ]]; then
-    BASE_DOMAIN="$BASE_DOMAIN_DEFAULT"
+    configure_sslip_fallback_domain
   fi
 
-  if [[ "$BASE_DOMAIN" == "$BASE_DOMAIN_DEFAULT" && -z "$INSTALL_TOKEN" && -z "$PUBLIC_DOMAIN" ]]; then
-    print_error "Para provisionar um subdominio oficial vexusclaw.com, informe --install-token."
-    exit 1
+  if [[ -z "$BASE_DOMAIN" && -z "$PUBLIC_DOMAIN" ]]; then
+    BASE_DOMAIN="$BASE_DOMAIN_DEFAULT"
   fi
 
   if [[ -z "$WORKSPACE_SLUG" ]]; then
