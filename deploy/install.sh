@@ -184,6 +184,25 @@ parse_args() {
   done
 }
 
+validate_install_token_input() {
+  if [[ -z "${INSTALL_TOKEN:-}" ]]; then
+    return
+  fi
+
+  INSTALL_TOKEN="$(printf '%s' "$INSTALL_TOKEN" | tr -d '[:space:]')"
+
+  if [[ "$INSTALL_TOKEN" == "vxc_xxx" || "$INSTALL_TOKEN" == "vxc_XXX" ]]; then
+    print_error "O --install-token informado e um placeholder. Gere e use um token real no control plane antes de instalar."
+    exit 1
+  fi
+
+  if [[ ! "$INSTALL_TOKEN" =~ ^vxc_[A-Za-z0-9_-]{16,}$ ]]; then
+    print_error "Formato invalido para --install-token. Use um token no formato vxc_<segredo>."
+    exit 1
+  fi
+}
+
+
 detect_os() {
   if [[ ! -f /etc/os-release ]]; then
     print_error "Nao foi possivel detectar o sistema operacional."
@@ -948,6 +967,7 @@ doctor_mode() {
 update_mode() {
   load_existing_context
   prompt_if_needed
+  validate_install_token_input
   claim_self_host_domain
   normalize_domain_inputs
   ensure_env
@@ -1016,6 +1036,8 @@ main() {
     exit 0
   fi
 
+  validate_install_token_input
+
   check_resources
   check_ports
   apt_install_base
@@ -1032,6 +1054,7 @@ main() {
   fi
 
   prompt_if_needed
+  validate_install_token_input
   claim_self_host_domain
   normalize_domain_inputs
   ensure_env
