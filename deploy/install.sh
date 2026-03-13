@@ -247,7 +247,7 @@ check_ports() {
       print_warn "Porta $port ja esta em uso."
       if [[ -n "$listeners" ]]; then
         printf '%s\n' "$listeners"
-        if ! grep -q 'apache2' <<<"$listeners"; then
+        if ! grep -Eq 'apache2|httpd' <<<"$listeners"; then
           hard_conflict=1
         fi
       fi
@@ -337,8 +337,23 @@ install_apache_php() {
     php-zip
 
   $SUDO a2enmod headers proxy proxy_fcgi proxy_http proxy_wstunnel rewrite setenvif ssl >/dev/null
+  validate_apache_config
   resolve_php_service
   $SUDO systemctl enable --now apache2 "$PHP_FPM_SERVICE"
+}
+
+validate_apache_config() {
+  local config_output=""
+
+  if ! command -v apache2ctl >/dev/null 2>&1; then
+    return
+  fi
+
+  config_output="$(apache2ctl configtest 2>&1)" || {
+    printf '%s\n' "$config_output" >&2
+    print_error "A configuracao atual do Apache neste host e invalida. Corrija ou desabilite o vhost quebrado antes de instalar a VEXUSCLAW."
+    exit 1
+  }
 }
 
 resolve_php_service() {
