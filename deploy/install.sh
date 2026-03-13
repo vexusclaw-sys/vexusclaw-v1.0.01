@@ -44,14 +44,14 @@ supports_color() {
 
 init_colors() {
   if supports_color; then
-    PURPLE='\033[0;35m'
-    MAGENTA='\033[1;35m'
-    CYAN='\033[0;36m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[1;33m'
-    RED='\033[0;31m'
-    BOLD='\033[1m'
-    NC='\033[0m'
+    PURPLE=$'\033[0;35m'
+    MAGENTA=$'\033[1;35m'
+    CYAN=$'\033[0;36m'
+    GREEN=$'\033[0;32m'
+    YELLOW=$'\033[1;33m'
+    RED=$'\033[0;31m'
+    BOLD=$'\033[1m'
+    NC=$'\033[0m'
   else
     PURPLE='' MAGENTA='' CYAN='' GREEN='' YELLOW='' RED='' BOLD='' NC=''
   fi
@@ -65,14 +65,14 @@ print_banner() {
   echo "╚██╗ ██╔╝██╔══╝   ██╔██╗ ██║   ██║╚════██║██║     ██║     ██╔══██║██║███╗██║"
   echo " ╚████╔╝ ███████╗██╔╝ ██╗╚██████╔╝███████║╚██████╗███████╗██║  ██║╚███╔███╔╝"
   echo "  ╚═══╝  ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝"
-  echo -e "${PURPLE}                          VEXUSCLAW🧙‍♂️${NC}"
-  echo -e "${CYAN}                         BY JOAO LUIZ 🧙‍♂️${NC}"
+  echo -e "${PURPLE}                          VEXUSCLAW${NC}"
+  echo -e "${CYAN}                         BY JOAO LUIZ${NC}"
   echo -e "${MAGENTA}            Premium self-host installer for Apache + PHP + Docker${NC}"
   echo
 }
 
 print_step() {
-  echo -e "${MAGENTA}[VEXUSCLAW🧙‍♂️]${NC} $*"
+  echo -e "${MAGENTA}[VEXUSCLAW]${NC} $*"
 }
 
 print_magic() {
@@ -93,7 +93,7 @@ print_error() {
 
 on_error() {
   local line="$1"
-  print_error "VEXUSCLAW🧙‍♂️ encontrou uma falha na linha ${line}. Corrija o ponto acima e rode o instalador novamente."
+  print_error "VEXUSCLAW encontrou uma falha na linha ${line}. Corrija o ponto acima e rode o instalador novamente."
 }
 
 trap 'on_error "$LINENO"' ERR
@@ -244,7 +244,7 @@ check_resources() {
   disk_mb="$(df -Pm / | awk 'NR==2 {print $4}')"
 
   if [[ "$mem_mb" -lt 3500 ]]; then
-    print_warn "A VPS tem ${mem_mb}MB de RAM. O recomendado para VEXUSCLAW🧙‍♂️ e 4GB ou mais."
+    print_warn "A VPS tem ${mem_mb}MB de RAM. O recomendado para VEXUSCLAW e 4GB ou mais."
   fi
 
   if [[ "$disk_mb" -lt 4096 ]]; then
@@ -285,7 +285,7 @@ check_ports() {
 }
 
 apt_install_base() {
-  print_step "VEXUSCLAW🧙‍♂️ esta preparando dependencias do host..."
+  print_step "VEXUSCLAW esta preparando dependencias do host..."
   disable_legacy_php_repo
   $SUDO apt-get update -y
   $SUDO apt-get install -y \
@@ -308,7 +308,7 @@ apt_install_base() {
 
 disable_legacy_php_repo() {
   if [[ -f /etc/apt/sources.list.d/sury-php.list ]]; then
-    print_warn "Repositorio legado do PHP detectado em /etc/apt/sources.list.d/sury-php.list. VEXUSCLAW🧙‍♂️ vai remover esse override para usar o PHP nativo da distro."
+    print_warn "Repositorio legado do PHP detectado em /etc/apt/sources.list.d/sury-php.list. VEXUSCLAW vai remover esse override para usar o PHP nativo da distro."
     $SUDO rm -f /etc/apt/sources.list.d/sury-php.list
   fi
 }
@@ -322,7 +322,7 @@ install_nodejs() {
     fi
   fi
 
-  print_magic "VEXUSCLAW🧙‍♂️ esta invocando Node.js 22..."
+  print_magic "VEXUSCLAW esta invocando Node.js 22..."
   curl -fsSL https://deb.nodesource.com/setup_22.x | $SUDO bash -
   $SUDO apt-get install -y nodejs
 }
@@ -338,13 +338,13 @@ install_docker() {
     return
   fi
 
-  print_magic "VEXUSCLAW🧙‍♂️ esta invocando Docker..."
+  print_magic "VEXUSCLAW esta invocando Docker..."
   curl -fsSL https://get.docker.com | $SUDO sh
   $SUDO systemctl enable --now docker
 }
 
 install_apache_php() {
-  print_magic "VEXUSCLAW🧙‍♂️ esta despertando Apache e PHP-FPM da distro..."
+  print_magic "VEXUSCLAW esta despertando Apache e PHP-FPM da distro..."
   $SUDO apt-get install -y \
     php-cli \
     php-curl \
@@ -469,7 +469,7 @@ clone_from_git() {
     exit 1
   fi
 
-  print_step "Baixando VEXUSCLAW🧙‍♂️ via Git em $INSTALL_DIR..."
+  print_step "Baixando VEXUSCLAW via Git em $INSTALL_DIR..."
   $SUDO mkdir -p "$INSTALL_DIR"
   $SUDO chown -R "$(id -u):$(id -g)" "$INSTALL_DIR"
   git clone --branch "$resolved_branch" "$REPO_URL" "$INSTALL_DIR"
@@ -480,7 +480,7 @@ install_from_bundle() {
   tmp_dir="$(mktemp -d)"
   bundle_file="$tmp_dir/install-bundle.tar.gz"
 
-  print_step "VEXUSCLAW🧙‍♂️ esta invocando o bundle oficial em $BUNDLE_URL..."
+  print_step "VEXUSCLAW esta invocando o bundle oficial em $BUNDLE_URL..."
   $SUDO mkdir -p "$INSTALL_DIR"
   $SUDO chown -R "$(id -u):$(id -g)" "$INSTALL_DIR"
 
@@ -501,10 +501,10 @@ install_dependencies_in_repo() {
     print_error "Codigo da VEXUSCLAW nao encontrado em $INSTALL_DIR apos baixar a origem."
     exit 1
   fi
-  print_step "VEXUSCLAW🧙‍♂️ esta instalando dependencias do monorepo..."
+  print_step "VEXUSCLAW esta instalando dependencias do monorepo..."
   cd "$INSTALL_DIR"
   pnpm install --no-frozen-lockfile
-  print_magic "VEXUSCLAW🧙‍♂️ esta materializando o Prisma Client..."
+  print_magic "VEXUSCLAW esta materializando o Prisma Client..."
   pnpm db:generate
 }
 
@@ -731,7 +731,7 @@ ensure_env() {
   env_file="$INSTALL_DIR/.env"
   tmp_env="$INSTALL_DIR/.env.install.tmp"
 
-  print_step "VEXUSCLAW🧙‍♂️ esta preparando o ambiente..."
+  print_step "VEXUSCLAW esta preparando o ambiente..."
   args=(
     env render
     --non-interactive
@@ -785,7 +785,7 @@ prepare_dashboard_php() {
     exit 1
   fi
 
-  print_step "VEXUSCLAW🧙‍♂️ esta alinhando a dashboard PHP no projeto..."
+  print_step "VEXUSCLAW esta alinhando a dashboard PHP no projeto..."
   $SUDO find "$INSTALL_DIR/dashboard-php" -type d -exec chmod 755 {} +
   $SUDO find "$INSTALL_DIR/dashboard-php" -type f -exec chmod 644 {} +
   $SUDO chgrp -R www-data "$INSTALL_DIR/dashboard-php"
@@ -812,7 +812,7 @@ configure_apache_site() {
 
   resolve_php_socket
 
-  print_step "VEXUSCLAW🧙‍♂️ esta conectando o dashboard PHP no Apache..."
+  print_step "VEXUSCLAW esta conectando o dashboard PHP no Apache..."
   sed \
     -e "s#__VEXUS_SERVER_NAME__#${PUBLIC_DOMAIN}#g" \
     -e "s#__VEXUS_SERVER_ALIAS_LINES__#${alias_lines}#g" \
@@ -828,7 +828,7 @@ configure_apache_site() {
 }
 
 run_database_tasks() {
-  print_step "VEXUSCLAW🧙‍♂️ esta preparando o banco..."
+  print_step "VEXUSCLAW esta preparando o banco..."
   docker_compose build gateway
   docker_compose run --rm gateway pnpm db:deploy
   if [[ "$SKIP_SEED" == false ]]; then
@@ -864,7 +864,7 @@ wait_for_http() {
 bootstrap_application() {
   local args=()
 
-  print_step "VEXUSCLAW🧙‍♂️ esta despertando o gateway..."
+  print_step "VEXUSCLAW esta despertando o gateway..."
   docker_compose up -d postgres redis
   run_database_tasks
   docker_compose up -d gateway
@@ -872,7 +872,7 @@ bootstrap_application() {
   wait_for_http "http://127.0.0.1:4000/health" "Gateway"
   wait_for_http "http://127.0.0.1/login" "Dashboard PHP" "$PUBLIC_DOMAIN"
 
-  print_magic "VEXUSCLAW🧙‍♂️ esta finalizando o bootstrap inicial..."
+  print_magic "VEXUSCLAW esta finalizando o bootstrap inicial..."
   args=(
     bootstrap run
     --non-interactive
@@ -924,7 +924,7 @@ obtain_tls_certificate() {
     return
   fi
 
-  print_magic "VEXUSCLAW🧙‍♂️ esta invocando TLS com Certbot..."
+  print_magic "VEXUSCLAW esta invocando TLS com Certbot..."
   if $SUDO certbot --apache --non-interactive --agree-tos --redirect --keep-until-expiring -m "$EMAIL" -d "$PUBLIC_DOMAIN"; then
     TLS_READY=true
     FINAL_URL="https://${PUBLIC_DOMAIN}"
@@ -963,7 +963,7 @@ EOF
 }
 
 doctor_mode() {
-  print_step "VEXUSCLAW🧙‍♂️ esta validando a saude da stack..."
+  print_step "VEXUSCLAW esta validando a saude da stack..."
   check_resources
   load_existing_context
 
@@ -1021,7 +1021,7 @@ print_footer() {
   cat <<EOF
 
 ${MAGENTA}${BOLD}╔════════════════════════════════════════════════════════════════╗${NC}
-${MAGENTA}${BOLD}║                 VEXUSCLAW🧙‍♂️ OPERACIONAL                  ║${NC}
+${MAGENTA}${BOLD}║                 VEXUSCLAW OPERACIONAL                  ║${NC}
 ${MAGENTA}${BOLD}╚════════════════════════════════════════════════════════════════╝${NC}
 ${GREEN}[OK]${NC} URL final: ${CYAN}${FINAL_URL}${NC}
 ${GREEN}[OK]${NC} Workspace: ${CYAN}${WORKSPACE_SLUG}${NC}
@@ -1032,7 +1032,7 @@ ${GREEN}[OK]${NC} Provider inicial: ${CYAN}${PROVIDER}${NC}
 ${YELLOW}[AVISO]${NC} Senha inicial: ${PASSWORD}
 ${YELLOW}[AVISO]${NC} Agentes: nenhum agente foi criado automaticamente nesta VPS.
 ${YELLOW}[AVISO]${NC} WhatsApp: $(if [[ "$SKIP_WHATSAPP" == true ]]; then printf '%s' 'provisionamento inicial pulado para economizar recursos'; else printf '%s' 'canal principal provisionado; conecte o QR depois de criar seus agentes'; fi)
-${CYAN}${BOLD}BY JOAO LUIZ 🧙‍♂️${NC}
+${CYAN}${BOLD}BY JOAO LUIZ${NC}
 
 Próximos passos:
   1. Acesse ${FINAL_URL}
