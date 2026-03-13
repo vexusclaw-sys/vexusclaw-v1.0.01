@@ -14,6 +14,7 @@ import type { VexusEnv } from "@vexus/config";
 import type { ProviderType, SetupFinalizeInput, SetupStatusResponse } from "@vexus/shared";
 
 import { hashPassword } from "@vexus/auth";
+import { isReservedWorkspaceSlug } from "@vexus/shared";
 
 import { HttpError } from "../../app/errors";
 import { serializeSetupStatus } from "../../lib/serializers";
@@ -396,7 +397,9 @@ export class SetupService {
   }
 
   private shouldAllocateFreshSlug(slug: string): boolean {
-    return slugify(slug) === slugify(this.env.DEFAULT_WORKSPACE_SLUG);
+    const normalized = slugify(slug);
+
+    return normalized === "mission-control" || isReservedWorkspaceSlug(normalized);
   }
 
   private async allocateWorkspaceSlug(source?: string): Promise<string> {

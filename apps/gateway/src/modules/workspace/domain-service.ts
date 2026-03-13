@@ -207,11 +207,7 @@ export class WorkspaceDomainService {
       return true;
     }
 
-    if (normalized === slugify(this.env.DEFAULT_WORKSPACE_SLUG)) {
-      return true;
-    }
-
-    return isReservedWorkspaceSlug(normalized);
+    return normalized === "mission-control" || isReservedWorkspaceSlug(normalized);
   }
 
   private async generateUniqueWorkspaceSlugForWorkspace(workspace: Workspace): Promise<string> {
