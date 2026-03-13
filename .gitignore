@@ -9,6 +9,7 @@
 coverage
 dist
 node_modules
+*.tsbuildinfo
 *.log
 apps/dashboard/.next
 packages/db/generated
