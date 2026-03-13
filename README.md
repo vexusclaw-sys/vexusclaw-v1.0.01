@@ -1,9 +1,12 @@
-# 🧙‍♂️ VexusClaw — Personal AI Assistant
-
-<img src="https://i.ibb.co/PvPGs1Xz/Sem-T-tulo-1.png">
-
+<p align="center">
+#🧙‍♂️ VexusClaw — Personal AI Assistant
+</p>
+<p align="center">
+  <img src="vexusclaw.png" width="400">
+</p>
+<p align="center">
 VEXUSCLAW is a self-hosted multi-channel agent platform built for operators who want a premium mission-control experience, deterministic infrastructure, and a modular orchestration core that can grow into a full agent ecosystem.
-
+</p>
 ## Product shape
 
 - `dashboard-php`: production dashboard served by Apache + PHP-FPM on self-host nodes.
