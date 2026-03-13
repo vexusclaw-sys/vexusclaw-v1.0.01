@@ -455,6 +455,8 @@ install_dependencies_in_repo() {
   print_step "VEXUSCLAW🧙‍♂️ esta instalando dependencias do monorepo..."
   cd "$INSTALL_DIR"
   pnpm install --no-frozen-lockfile
+  print_magic "VEXUSCLAW🧙‍♂️ esta materializando o Prisma Client..."
+  pnpm db:generate
 }
 
 run_installer_cli() {

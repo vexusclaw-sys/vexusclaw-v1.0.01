@@ -174,9 +174,18 @@ importers:
 
   apps/installer:
     dependencies:
+      '@vexus/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@vexus/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@vexus/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@vexus/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       tsx:
         specifier: ^4.19.3
         version: 4.21.0
