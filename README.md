@@ -1,6 +1,6 @@
 # 🧙‍♂️ VexusClaw — Personal AI Assistant
 
-<img src="[url](https://i.ibb.co/PvPGs1Xz/Sem-T-tulo-1.png)">
+<img src="https://i.ibb.co/PvPGs1Xz/Sem-T-tulo-1.png">
 
 VEXUSCLAW is a self-hosted multi-channel agent platform built for operators who want a premium mission-control experience, deterministic infrastructure, and a modular orchestration core that can grow into a full agent ecosystem.
 
