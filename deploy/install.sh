@@ -247,7 +247,7 @@ check_ports() {
       print_warn "Porta $port ja esta em uso."
       if [[ -n "$listeners" ]]; then
         printf '%s\n' "$listeners"
-        if ! grep -Eq 'apache2|httpd' <<<"$listeners"; then
+        if ! grep -q 'apache2' <<<"$listeners"; then
           hard_conflict=1
         fi
       fi
@@ -256,7 +256,7 @@ check_ports() {
   done
 
   if [[ "$hard_conflict" -eq 1 ]]; then
-    print_error "As portas 80/443 estao ocupadas por um servico que nao e o Apache da VEXUSCLAW. Libere essas portas antes da instalacao."
+    print_error "As portas 80/443 estao ocupadas por um servico que nao e o apache2 gerenciado pela VEXUSCLAW. Libere essas portas antes da instalacao."
     exit 1
   fi
 
