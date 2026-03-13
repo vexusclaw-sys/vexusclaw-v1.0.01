@@ -239,15 +239,29 @@ check_ports() {
   fi
 
   local busy=0
+  local hard_conflict=0
   for port in 80 443; do
     if ss -ltn "( sport = :$port )" | tail -n +2 | grep -q .; then
-      print_warn "Porta $port ja esta em uso. VEXUSCLAW🧙‍♂️ vai continuar, mas o Apache/certbot podem falhar se isso nao fizer parte da stack atual."
+      local listeners
+      listeners="$(ss -ltnpH "( sport = :$port )" 2>/dev/null || true)"
+      print_warn "Porta $port ja esta em uso."
+      if [[ -n "$listeners" ]]; then
+        printf '%s\n' "$listeners"
+        if ! grep -q 'apache2' <<<"$listeners"; then
+          hard_conflict=1
+        fi
+      fi
       busy=1
     fi
   done
 
+  if [[ "$hard_conflict" -eq 1 ]]; then
+    print_error "As portas 80/443 estao ocupadas por um servico que nao e o Apache da VEXUSCLAW. Libere essas portas antes da instalacao."
+    exit 1
+  fi
+
   if [[ "$busy" -eq 1 && "$NON_INTERACTIVE" == true ]]; then
-    print_warn "Modo nao interativo ativo: continuando apesar das portas ocupadas."
+    print_warn "Modo nao interativo ativo: continuando porque as portas ocupadas aparentam pertencer ao proprio Apache."
   fi
 }
 
