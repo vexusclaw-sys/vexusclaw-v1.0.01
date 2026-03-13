@@ -30,7 +30,7 @@ Repo-local entrypoints:
 Self-host customer nodes now run with this topology:
 
 - Host `Apache` on `80/443`
-- Host `PHP-FPM 8.3`
+- Host `PHP-FPM` from the distro
 - Docker Compose `postgres`
 - Docker Compose `redis`
 - Docker Compose `gateway`

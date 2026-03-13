@@ -25,7 +25,10 @@ echo
 
 echo "== Host services =="
 systemctl is-active apache2 2>/dev/null || true
-systemctl is-active php8.3-fpm 2>/dev/null || true
+PHP_FPM_SERVICE="$(systemctl list-unit-files --type=service 'php*-fpm.service' --no-legend 2>/dev/null | awk '{print $1}' | sort -V | tail -n 1)"
+if [[ -n "$PHP_FPM_SERVICE" ]]; then
+  systemctl is-active "$PHP_FPM_SERVICE" 2>/dev/null || true
+fi
 echo
 
 if command -v docker >/dev/null 2>&1; then

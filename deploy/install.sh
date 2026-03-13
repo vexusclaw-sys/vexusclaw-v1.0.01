@@ -35,6 +35,7 @@ TLS_READY=false
 FINAL_URL=""
 PUBLIC_IP=""
 PHP_FPM_SOCKET=""
+PHP_FPM_SERVICE=""
 REPO_EXPLICIT=false
 
 supports_color() {
@@ -252,6 +253,7 @@ check_ports() {
 
 apt_install_base() {
   print_step "VEXUSCLAW🧙‍♂️ esta preparando dependencias do host..."
+  disable_legacy_php_repo
   $SUDO apt-get update -y
   $SUDO apt-get install -y \
     apt-transport-https \
@@ -269,6 +271,13 @@ apt_install_base() {
     python3-certbot-apache \
     rsync \
     software-properties-common
+}
+
+disable_legacy_php_repo() {
+  if [[ -f /etc/apt/sources.list.d/sury-php.list ]]; then
+    print_warn "Repositorio legado do PHP detectado em /etc/apt/sources.list.d/sury-php.list. VEXUSCLAW🧙‍♂️ vai remover esse override para usar o PHP nativo da distro."
+    $SUDO rm -f /etc/apt/sources.list.d/sury-php.list
+  fi
 }
 
 install_nodejs() {
@@ -301,41 +310,33 @@ install_docker() {
   $SUDO systemctl enable --now docker
 }
 
-ensure_php_repository() {
-  if apt-cache show php8.3-fpm >/dev/null 2>&1; then
+install_apache_php() {
+  print_magic "VEXUSCLAW🧙‍♂️ esta despertando Apache e PHP-FPM da distro..."
+  $SUDO apt-get install -y \
+    php-cli \
+    php-curl \
+    php-fpm \
+    php-intl \
+    php-mbstring \
+    php-pgsql \
+    php-xml \
+    php-zip
+
+  $SUDO a2enmod headers proxy proxy_fcgi proxy_http proxy_wstunnel rewrite setenvif ssl >/dev/null
+  resolve_php_service
+  $SUDO systemctl enable --now apache2 "$PHP_FPM_SERVICE"
+}
+
+resolve_php_service() {
+  if [[ -n "$PHP_FPM_SERVICE" ]]; then
     return
   fi
 
-  if [[ -z "${OS_CODENAME:-}" ]]; then
-    print_error "Nao foi possivel detectar o codename do sistema para instalar PHP 8.3."
+  PHP_FPM_SERVICE="$(systemctl list-unit-files --type=service 'php*-fpm.service' --no-legend 2>/dev/null | awk '{print $1}' | sort -V | tail -n 1)"
+  if [[ -z "$PHP_FPM_SERVICE" ]]; then
+    print_error "Nenhum servico PHP-FPM foi encontrado apos a instalacao."
     exit 1
   fi
-
-  print_magic "VEXUSCLAW🧙‍♂️ esta preparando o repositorio PHP 8.3..."
-  if [[ ! -f /usr/share/keyrings/sury-php.gpg ]]; then
-    curl -fsSL https://packages.sury.org/php/apt.gpg | $SUDO gpg --dearmor -o /usr/share/keyrings/sury-php.gpg
-  fi
-  printf 'deb [signed-by=/usr/share/keyrings/sury-php.gpg] https://packages.sury.org/php/ %s main\n' "$OS_CODENAME" \
-    | $SUDO tee /etc/apt/sources.list.d/sury-php.list >/dev/null
-  $SUDO apt-get update -y
-}
-
-install_apache_php() {
-  ensure_php_repository
-
-  print_magic "VEXUSCLAW🧙‍♂️ esta despertando Apache e PHP-FPM 8.3..."
-  $SUDO apt-get install -y \
-    php8.3-cli \
-    php8.3-curl \
-    php8.3-fpm \
-    php8.3-intl \
-    php8.3-mbstring \
-    php8.3-pgsql \
-    php8.3-xml \
-    php8.3-zip
-
-  $SUDO a2enmod headers proxy proxy_fcgi proxy_http proxy_wstunnel rewrite setenvif ssl >/dev/null
-  $SUDO systemctl enable --now apache2 php8.3-fpm
 }
 
 ensure_repo() {
@@ -708,11 +709,6 @@ prepare_dashboard_php() {
 }
 
 resolve_php_socket() {
-  if [[ -S /run/php/php8.3-fpm.sock ]]; then
-    PHP_FPM_SOCKET="/run/php/php8.3-fpm.sock"
-    return
-  fi
-
   PHP_FPM_SOCKET="$(find /run/php -maxdepth 1 -type s -name 'php*-fpm.sock' | sort | head -n 1)"
   if [[ -z "$PHP_FPM_SOCKET" ]]; then
     print_error "Nenhum socket PHP-FPM foi encontrado em /run/php."
@@ -890,7 +886,8 @@ doctor_mode() {
 
   command -v docker >/dev/null 2>&1 && $SUDO docker compose version || true
   $SUDO systemctl is-active apache2 || true
-  $SUDO systemctl is-active php8.3-fpm || true
+  resolve_php_service
+  $SUDO systemctl is-active "$PHP_FPM_SERVICE" || true
 
   if [[ -f "$INSTALL_DIR/.env" ]]; then
     docker_compose ps || true
