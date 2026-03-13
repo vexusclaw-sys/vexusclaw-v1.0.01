@@ -2,9 +2,11 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+ARG PNPM_VERSION=10.6.0
+
 RUN apk add --no-cache git
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 COPY package.json pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps ./apps
@@ -17,9 +19,11 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+ARG PNPM_VERSION=10.6.0
+
 RUN apk add --no-cache git
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 COPY --from=builder /app /app
 
