@@ -1,0 +1,41 @@
+{
+  "name": "@vexus/gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "lint": "eslint .",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cacheable/node-cache": "^1.7.6",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/jwt": "^9.1.0",
+    "@fastify/websocket": "^11.1.0",
+    "@hapi/boom": "^10.0.1",
+    "@vexus/auth": "workspace:*",
+    "@vexus/channels": "workspace:*",
+    "@vexus/config": "workspace:*",
+    "@vexus/core": "workspace:*",
+    "@vexus/db": "workspace:*",
+    "@vexus/logger": "workspace:*",
+    "@vexus/memory": "workspace:*",
+    "@vexus/providers": "workspace:*",
+    "@vexus/queue": "workspace:*",
+    "@vexus/shared": "workspace:*",
+    "@vexus/tools": "workspace:*",
+    "@whiskeysockets/baileys": "7.0.0-rc.9",
+    "clawhub": "0.7.0",
+    "fastify": "^5.2.1",
+    "ioredis": "^5.8.1",
+    "qrcode": "^1.5.4",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5"
+  }
+}

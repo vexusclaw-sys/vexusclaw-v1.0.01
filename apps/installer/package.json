@@ -1,0 +1,23 @@
+{
+  "name": "@vexus/installer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "vexus-bootstrap": "./bin/vexus-installer.mjs",
+    "vexus-installer": "./bin/vexus-installer.mjs"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@vexus/auth": "workspace:*",
+    "@vexus/config": "workspace:*",
+    "@vexus/db": "workspace:*",
+    "@vexus/shared": "workspace:*",
+    "tsx": "^4.19.3"
+  }
+}

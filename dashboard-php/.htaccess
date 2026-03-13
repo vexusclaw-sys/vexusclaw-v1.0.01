@@ -1,0 +1,21 @@
+Options -Indexes
+RewriteEngine On
+
+RewriteRule ^api/ - [L]
+RewriteRule ^assets/ - [L]
+RewriteRule ^includes/ - [L]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^$ index.php [L,QSA]
+RewriteRule ^login/?$ login.php [L,QSA]
+RewriteRule ^overview/?$ vision.php [L,QSA]
+RewriteRule ^setup/?$ setup.php [L,QSA]
+RewriteRule ^agents/?$ agents.php [L,QSA]
+RewriteRule ^channels/?$ channels.php [L,QSA]
+RewriteRule ^sessions/?$ session.php [L,QSA]
+RewriteRule ^transcript/?$ transcript.php [L,QSA]
+RewriteRule ^logs/?$ logs.php [L,QSA]
+RewriteRule ^settings/?$ settings.php [L,QSA]

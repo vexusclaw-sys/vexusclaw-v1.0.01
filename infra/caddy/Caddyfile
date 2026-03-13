@@ -1,0 +1,24 @@
+{
+  email {$CADDY_EMAIL:ops@example.com}
+}
+
+{$VEXUS_DOMAIN:localhost}, *.{$VEXUS_BASE_DOMAIN:localhost} {
+  encode gzip zstd
+
+  @api path /api/* /health /health/* /events/*
+  reverse_proxy @api gateway:4000 {
+    header_up Host {host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+
+  @dashboard path /login /setup /overview /agents /channels /sessions /memory /skills /automations /logs /settings /billing /webchat-preview /_next/* /favicon.ico
+  reverse_proxy @dashboard dashboard:3000 {
+    header_up Host {host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+
+  reverse_proxy dashboard:3000 {
+    header_up Host {host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+}

@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.env.bak-*
+.env.local
+.env.production
+.env.*.local
+.next
+.turbo
+coverage
+dist
+node_modules
+*.log
+apps/dashboard/.next
+packages/db/generated
+infra/docker/data
+deploy/install-bundle.tar.gz

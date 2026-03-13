@@ -1,0 +1,71 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "allowJs": false,
+    "checkJs": false,
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@vexus/auth": [
+        "packages/auth/src/index.ts"
+      ],
+      "@vexus/channels": [
+        "packages/channels/src/index.ts"
+      ],
+      "@vexus/config": [
+        "packages/config/src/index.ts"
+      ],
+      "@vexus/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@vexus/db": [
+        "packages/db/src/index.ts"
+      ],
+      "@vexus/logger": [
+        "packages/logger/src/index.ts"
+      ],
+      "@vexus/memory": [
+        "packages/memory/src/index.ts"
+      ],
+      "@vexus/plugins": [
+        "packages/plugins/src/index.ts"
+      ],
+      "@vexus/providers": [
+        "packages/providers/src/index.ts"
+      ],
+      "@vexus/queue": [
+        "packages/queue/src/index.ts"
+      ],
+      "@vexus/sdk": [
+        "packages/sdk/src/index.ts"
+      ],
+      "@vexus/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@vexus/tools": [
+        "packages/tools/src/index.ts"
+      ],
+      "@vexus/ui": [
+        "packages/ui/src/index.ts"
+      ]
+    }
+  }
+}

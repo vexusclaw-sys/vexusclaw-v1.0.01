@@ -1,0 +1,631 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  SETUP
+  SUSPENDED
+}
+
+enum OnboardingStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  OPERATOR
+}
+
+enum ProviderType {
+  OPENAI
+  CHATGPT_OAUTH
+  MOCK
+}
+
+enum ProviderConnectionMode {
+  API_KEY
+  OAUTH_PKCE
+  OAUTH_IMPORTED
+  OAUTH_STUB
+}
+
+enum ProviderConnectionStatus {
+  CONNECTED
+  PENDING
+  ERROR
+  DISABLED
+}
+
+enum AgentStatus {
+  DRAFT
+  ACTIVE
+  DISABLED
+}
+
+enum ChannelType {
+  WHATSAPP
+  WEBCHAT
+}
+
+enum ChannelStatus {
+  DISCONNECTED
+  CONNECTING
+  QR_REQUIRED
+  CONNECTED
+  ERROR
+}
+
+enum SessionStatus {
+  OPEN
+  IDLE
+  HANDOVER_PENDING
+  CLOSED
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+  TOOL
+}
+
+enum MemoryItemType {
+  FACT
+  NOTE
+  SUMMARY
+  FILE_REFERENCE
+}
+
+enum SkillStatus {
+  DRAFT
+  PUBLISHED
+  DEPRECATED
+  DISABLED
+}
+
+enum AutomationJobStatus {
+  QUEUED
+  RUNNING
+  SUCCESS
+  FAILED
+  PAUSED
+}
+
+enum AuditActionType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXECUTE
+  RECONNECT
+}
+
+enum ChannelEventType {
+  CONNECTED
+  DISCONNECTED
+  QR_REQUIRED
+  RECONNECTING
+  INBOUND_MESSAGE
+  OUTBOUND_MESSAGE
+  ERROR
+}
+
+enum SettingScope {
+  GLOBAL
+  WORKSPACE
+}
+
+enum OAuthAttemptStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum SelfHostTokenStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum SelfHostDnsRecordStatus {
+  PENDING
+  ACTIVE
+  ERROR
+}
+
+model User {
+  id                         String               @id @default(uuid())
+  name                       String
+  email                      String               @unique
+  passwordHash               String
+  status                     UserStatus           @default(ACTIVE)
+  lastLoginAt                DateTime?
+  memberships                WorkspaceMember[]
+  refreshTokens              RefreshToken[]
+  uploadedFiles              FileAsset[]          @relation("UploadedFiles")
+  providerConnectionsCreated ProviderConnection[] @relation("ProviderConnectionCreatedBy")
+  oauthSessionAttempts       OAuthSessionAttempt[] @relation("OAuthAttemptInitiatedBy")
+  auditLogs                  AuditLog[]           @relation("AuditActor")
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+  deletedAt                  DateTime?
+
+  @@index([status, createdAt])
+}
+
+model Workspace {
+  id                String               @id @default(uuid())
+  name              String
+  slug              String               @unique
+  domain            String?              @unique
+  status            WorkspaceStatus      @default(SETUP)
+  onboardingStatus  OnboardingStatus     @default(PENDING)
+  metadata          Json?
+  members           WorkspaceMember[]
+  providers         ProviderConnection[]
+  oauthSessionAttempts OAuthSessionAttempt[]
+  agents            Agent[]
+  toolPermissions   AgentToolPermission[]
+  channelConnections ChannelConnection[]
+  sessions          Session[]
+  messages          Message[]
+  memoryItems       MemoryItem[]
+  files             FileAsset[]
+  installedSkills   InstalledSkill[]
+  automationJobs    AutomationJob[]
+  auditLogs         AuditLog[]
+  channelEventLogs  ChannelEventLog[]
+  refreshTokens     RefreshToken[]
+  setupState        SetupState?
+  settings          SystemSetting[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  deletedAt         DateTime?
+
+  @@index([status, createdAt])
+}
+
+model SelfHostInstallToken {
+  id              String              @id @default(uuid())
+  tokenHash       String              @unique
+  label           String
+  email           String?
+  status          SelfHostTokenStatus @default(ACTIVE)
+  expiresAt       DateTime?
+  lastUsedAt      DateTime?
+  activationCount Int                 @default(0)
+  metadata        Json?
+  dnsRecords      SelfHostDnsRecord[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model SelfHostDnsRecord {
+  id                String                  @id @default(uuid())
+  installTokenId    String
+  slug              String                  @unique
+  fqdn              String                  @unique
+  ipAddress         String
+  cloudflareRecordId String?
+  status            SelfHostDnsRecordStatus @default(PENDING)
+  lastError         String?                 @db.Text
+  lastSyncedAt      DateTime?
+  metadata          Json?
+  installToken      SelfHostInstallToken    @relation(fields: [installTokenId], references: [id], onDelete: Cascade)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@unique([installTokenId])
+  @@index([status, updatedAt])
+}
+
+model WorkspaceMember {
+  id         String        @id @default(uuid())
+  workspaceId String
+  userId     String
+  role       WorkspaceRole @default(OPERATOR)
+  workspace  Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  deletedAt  DateTime?
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId, role])
+  @@index([userId])
+}
+
+model ProviderConnection {
+  id              String                   @id @default(uuid())
+  workspaceId     String
+  provider        ProviderType
+  mode            ProviderConnectionMode
+  label           String
+  encryptedSecret String?
+  accessTokenEncrypted String?
+  refreshTokenEncrypted String?
+  tokenExpiresAt  DateTime?
+  scope           String?
+  accountId       String?
+  authState       String?
+  secretHint      String?
+  config          Json?
+  status          ProviderConnectionStatus @default(PENDING)
+  lastTestedAt    DateTime?
+  lastError       String?                  @db.Text
+  isPrimary       Boolean                  @default(false)
+  createdById     String?
+  workspace       Workspace                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy       User?                    @relation("ProviderConnectionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  deletedAt       DateTime?
+
+  @@index([workspaceId, status])
+  @@index([provider, status])
+  @@index([workspaceId, provider, isPrimary])
+  @@index([tokenExpiresAt])
+}
+
+model OAuthSessionAttempt {
+  id                   String             @id @default(uuid())
+  workspaceId          String
+  initiatedById        String?
+  provider             ProviderType
+  state                String             @unique
+  codeVerifierEncrypted String
+  redirectUri          String
+  returnToPath         String?
+  requestedLabel       String?
+  makePrimary          Boolean            @default(true)
+  status               OAuthAttemptStatus @default(PENDING)
+  expiresAt            DateTime
+  completedAt          DateTime?
+  lastError            String?            @db.Text
+  metadata             Json?
+  workspace            Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  initiatedBy          User?              @relation("OAuthAttemptInitiatedBy", fields: [initiatedById], references: [id], onDelete: SetNull)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([workspaceId, status])
+  @@index([provider, status])
+  @@index([expiresAt])
+}
+
+model Agent {
+  id                 String               @id @default(uuid())
+  workspaceId        String
+  parentAgentId      String?
+  name               String
+  slug               String
+  description        String?
+  role               String
+  instructions       String               @db.Text
+  tone               String
+  status             AgentStatus          @default(DRAFT)
+  isDefault          Boolean              @default(false)
+  config             Json?
+  workspace          Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent             Agent?               @relation("AgentHierarchy", fields: [parentAgentId], references: [id], onDelete: SetNull)
+  children           Agent[]              @relation("AgentHierarchy")
+  toolPermissions    AgentToolPermission[]
+  defaultForChannels ChannelConnection[]  @relation("DefaultChannelAgent")
+  sessions           Session[]
+  messages           Message[]
+  memoryItems        MemoryItem[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  deletedAt          DateTime?
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId, status])
+}
+
+model AgentToolPermission {
+  id        String    @id @default(uuid())
+  workspaceId String
+  agentId   String
+  toolKey   String
+  isAllowed Boolean   @default(true)
+  scope     Json?
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([agentId, toolKey])
+  @@index([workspaceId, toolKey])
+}
+
+model ChannelConnection {
+  id             String         @id @default(uuid())
+  workspaceId    String
+  type           ChannelType
+  name           String
+  status         ChannelStatus  @default(DISCONNECTED)
+  config         Json?
+  externalId     String?
+  sessionState   Json?
+  qrCodeData     String?        @db.Text
+  qrExpiresAt    DateTime?
+  lastError      String?        @db.Text
+  defaultAgentId String?
+  lastConnectedAt DateTime?
+  lastActivityAt DateTime?
+  isPrimary      Boolean        @default(false)
+  workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  defaultAgent   Agent?         @relation("DefaultChannelAgent", fields: [defaultAgentId], references: [id], onDelete: SetNull)
+  sessions       Session[]
+  eventLogs      ChannelEventLog[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId, type])
+  @@index([status])
+}
+
+model ChannelEventLog {
+  id                  String           @id @default(uuid())
+  workspaceId         String
+  channelConnectionId String
+  type                ChannelEventType
+  message             String
+  payload             Json?
+  workspace           Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  channelConnection   ChannelConnection @relation(fields: [channelConnectionId], references: [id], onDelete: Cascade)
+  createdAt           DateTime         @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([channelConnectionId, createdAt])
+  @@index([type, createdAt])
+}
+
+model RefreshToken {
+  id                String         @id @default(uuid())
+  userId            String
+  workspaceId       String
+  tokenHash         String         @unique
+  familyId          String
+  userAgent         String?
+  ipAddress         String?
+  expiresAt         DateTime
+  lastUsedAt        DateTime?
+  revokedAt         DateTime?
+  replacedByTokenId String?
+  metadata          Json?
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace         Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  replacedByToken   RefreshToken?  @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id], onDelete: SetNull)
+  previousTokens    RefreshToken[] @relation("RefreshTokenRotation")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([userId, expiresAt])
+  @@index([workspaceId, familyId])
+}
+
+model SetupState {
+  id                String           @id @default(uuid())
+  workspaceId       String           @unique
+  currentStep       String           @default("welcome")
+  isBootstrapped    Boolean          @default(false)
+  adminConfigured   Boolean          @default(false)
+  providerConfigured Boolean         @default(false)
+  primaryChannel    ChannelType      @default(WHATSAPP)
+  domain            String?
+  adminEmail        String?
+  providerType      ProviderType?
+  preferences       Json?
+  completedAt       DateTime?
+  workspace         Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model Session {
+  id                    String            @id @default(uuid())
+  workspaceId           String
+  agentId               String
+  channelConnectionId   String
+  externalUserId        String
+  externalConversationId String?
+  visitorName           String?
+  status                SessionStatus     @default(OPEN)
+  summary               String?           @db.Text
+  metadata              Json?
+  startedAt             DateTime          @default(now())
+  lastMessageAt         DateTime          @default(now())
+  closedAt              DateTime?
+  workspace             Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent                 Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  channelConnection     ChannelConnection @relation(fields: [channelConnectionId], references: [id], onDelete: Cascade)
+  messages              Message[]
+  memoryItems           MemoryItem[]
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@index([workspaceId, status])
+  @@index([agentId, lastMessageAt])
+  @@index([channelConnectionId, lastMessageAt])
+}
+
+model Message {
+  id               String      @id @default(uuid())
+  workspaceId      String
+  sessionId        String
+  agentId          String?
+  externalMessageId String?
+  role             MessageRole
+  content          String      @db.Text
+  tokenInput       Int?
+  tokenOutput      Int?
+  estimatedCostUsd Decimal?    @db.Decimal(12, 6)
+  payload          Json?
+  workspace        Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  session          Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  agent            Agent?      @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  createdAt        DateTime    @default(now())
+
+  @@index([sessionId, createdAt])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, role, createdAt])
+  @@unique([workspaceId, externalMessageId])
+}
+
+model MemoryItem {
+  id         String         @id @default(uuid())
+  workspaceId String
+  agentId    String?
+  sessionId  String?
+  type       MemoryItemType
+  title      String?
+  content    String         @db.Text
+  tags       String[]
+  importance Int            @default(0)
+  metadata   Json?
+  workspace  Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent      Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  session    Session?       @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  files      FileAsset[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  deletedAt  DateTime?
+
+  @@index([workspaceId, type])
+  @@index([agentId, createdAt])
+  @@index([sessionId, createdAt])
+}
+
+model FileAsset {
+  id           String      @id @default(uuid())
+  workspaceId  String
+  uploadedById String?
+  memoryItemId String?
+  filename     String
+  storageKey   String      @unique
+  mimeType     String
+  sizeBytes    Int
+  checksum     String?
+  metadata     Json?
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploadedBy   User?       @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: SetNull)
+  memoryItem   MemoryItem? @relation(fields: [memoryItemId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+
+  @@index([workspaceId, createdAt])
+  @@index([memoryItemId])
+}
+
+model Skill {
+  id                  String           @id @default(uuid())
+  slug                String           @unique
+  name                String
+  description         String           @db.Text
+  version             String
+  author              String
+  category            String
+  manifest            Json
+  requiredPermissions String[]
+  status              SkillStatus      @default(PUBLISHED)
+  installations       InstalledSkill[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model InstalledSkill {
+  id         String      @id @default(uuid())
+  workspaceId String
+  skillId    String
+  version    String
+  status     SkillStatus @default(PUBLISHED)
+  config     Json?
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  skill      Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  deletedAt  DateTime?
+
+  @@unique([workspaceId, skillId])
+  @@index([workspaceId, status])
+}
+
+model AutomationJob {
+  id             String              @id @default(uuid())
+  workspaceId    String
+  name           String
+  kind           String
+  queueName      String
+  jobKey         String?
+  cronExpression String?
+  payload        Json?
+  status         AutomationJobStatus @default(QUEUED)
+  lastRunAt      DateTime?
+  lastError      String?             @db.Text
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  deletedAt      DateTime?
+
+  @@index([workspaceId, status])
+  @@index([jobKey])
+}
+
+model AuditLog {
+  id           String          @id @default(uuid())
+  workspaceId  String
+  actorUserId  String?
+  action       AuditActionType
+  resourceType String
+  resourceId   String
+  ipAddress    String?
+  userAgent    String?
+  before       Json?
+  after        Json?
+  metadata     Json?
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor        User?           @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  createdAt    DateTime        @default(now())
+
+  @@index([workspaceId, createdAt])
+  @@index([resourceType, resourceId])
+}
+
+model SystemSetting {
+  id         String       @id @default(uuid())
+  workspaceId String?
+  scope      SettingScope @default(WORKSPACE)
+  scopeKey   String
+  key        String
+  value      Json
+  isSecret   Boolean      @default(false)
+  workspace  Workspace?   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([scopeKey, key])
+  @@index([workspaceId, key])
+}

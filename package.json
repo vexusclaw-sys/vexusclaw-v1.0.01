@@ -1,0 +1,44 @@
+{
+  "name": "vexusclaw",
+  "private": true,
+  "version": "1.0.0",
+  "description": "VEXUSCLAW self-hosted multi-channel agent platform monorepo.",
+  "packageManager": "pnpm@10.6.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @vexus/db prisma:generate",
+    "db:migrate": "pnpm --filter @vexus/db prisma:migrate",
+    "db:deploy": "pnpm --filter @vexus/db prisma:deploy",
+    "db:seed": "pnpm --filter @vexus/db prisma:seed",
+    "docker:up": "docker compose --env-file .env -f infra/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose --env-file .env -f infra/docker/docker-compose.yml down",
+    "docker:logs": "docker compose --env-file .env -f infra/docker/docker-compose.yml logs -f",
+    "smoke:whatsapp": "bash infra/scripts/smoke-whatsapp.sh"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^15.5.12",
+    "@eslint/js": "^9.22.0",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.1",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.3",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
+    "turbo": "^2.4.4",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1"
+  }
+}

@@ -1,0 +1,37 @@
+<VirtualHost *:80>
+  ServerName __VEXUS_SERVER_NAME__
+__VEXUS_SERVER_ALIAS_LINES__
+
+  DocumentRoot __VEXUS_DOCUMENT_ROOT__
+  DirectoryIndex index.php index.html
+
+  ProxyPreserveHost On
+  ProxyRequests Off
+  RequestHeader set X-Forwarded-Proto "https" env=HTTPS
+  RequestHeader set X-Forwarded-Proto "http" env=!HTTPS
+
+  <Directory "__VEXUS_DOCUMENT_ROOT__">
+    AllowOverride All
+    Options FollowSymLinks
+    Require all granted
+  </Directory>
+
+  <FilesMatch "\.php$">
+    SetHandler "proxy:unix:__VEXUS_PHP_FPM_SOCK__|fcgi://localhost/"
+  </FilesMatch>
+
+  ProxyPass "/api/" "http://127.0.0.1:4000/api/"
+  ProxyPassReverse "/api/" "http://127.0.0.1:4000/api/"
+
+  ProxyPass "/health" "http://127.0.0.1:4000/health"
+  ProxyPassReverse "/health" "http://127.0.0.1:4000/health"
+
+  ProxyPass "/events/" "ws://127.0.0.1:4000/events/"
+  ProxyPassReverse "/events/" "ws://127.0.0.1:4000/events/"
+
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-Content-Type-Options "nosniff"
+
+  ErrorLog ${APACHE_LOG_DIR}/__VEXUS_SITE_SLUG___error.log
+  CustomLog ${APACHE_LOG_DIR}/__VEXUS_SITE_SLUG___access.log combined
+</VirtualHost>
