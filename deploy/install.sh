@@ -581,8 +581,9 @@ claim_self_host_domain() {
     return
   fi
 
-  print_magic "VEXUSCLAW🧙‍♂️ esta reservando o subdominio self-host..."
+  print_magic "VEXUSCLAW esta reservando o subdominio self-host..."
   local claim_json
+  local claimed_slug
   local args=()
   PUBLIC_IP="${PUBLIC_IP:-$(get_public_ip)}"
   args=(claim --api-base-url "$PROVISIONING_API_URL" --install-token "$INSTALL_TOKEN")
@@ -592,14 +593,25 @@ claim_self_host_domain() {
   claim_json="$(run_installer_cli "${args[@]}")"
 
   PUBLIC_DOMAIN="$(printf '%s' "$claim_json" | jq -r '.fqdn // empty')"
-  WORKSPACE_SLUG="${WORKSPACE_SLUG:-$(printf '%s' "$claim_json" | jq -r '.slug // empty')}"
+  claimed_slug="$(printf '%s' "$claim_json" | jq -r '.slug // empty')"
+  WORKSPACE_SLUG="${WORKSPACE_SLUG:-$claimed_slug}"
 
-  if [[ -z "$PUBLIC_DOMAIN" || -z "$WORKSPACE_SLUG" ]]; then
+  if [[ -z "$PUBLIC_DOMAIN" || -z "$claimed_slug" ]]; then
     print_error "Falha ao reservar subdominio self-host. Resposta: $claim_json"
     exit 1
   fi
 
-  BASE_DOMAIN="${PUBLIC_DOMAIN#${WORKSPACE_SLUG}.}"
+  if [[ "$PUBLIC_DOMAIN" != *.* ]]; then
+    print_error "Dominio invalido recebido no provisioning: $PUBLIC_DOMAIN"
+    exit 1
+  fi
+
+  BASE_DOMAIN="${PUBLIC_DOMAIN#*.}"
+
+  if [[ -n "$WORKSPACE_SLUG" && "$WORKSPACE_SLUG" != "$claimed_slug" ]]; then
+    print_warn "Slug existente ($WORKSPACE_SLUG) diferente do slug provisionado ($claimed_slug). Mantendo slug local e usando dominio provisionado."
+  fi
+
   print_success "Subdominio reservado: $PUBLIC_DOMAIN"
 }
 
